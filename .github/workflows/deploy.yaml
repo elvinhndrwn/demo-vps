@@ -13,10 +13,7 @@ jobs:
         run: mvn clean install
       - name: Build Docker Image
         run: |
-          docker build \
-            --build-arg APP_NAME=$(cat src/main/resources/application.properties | grep spring.application.name= | cut -d'=' -f2) \
-            --build-arg APP_VERSION=$(mvn --non-interactive org.apache.maven.plugins:maven-help-plugin:3.0.1:evaluate -Dexpression=project.version | cut -d'"' -f2) \
-            -t "${APP_NAME}:${APP_VERSION}" .
+          docker build -t elvinhndrwn16/${{ env.APP_NAME }}:${{ env.APP_VERSION }} .
       - name: Login to Docker Registry
         run: docker login -u elvinhndrwn16 -p ${{ secrets.DOCKER_PASSWORD }}
       - name: Push Docker Image
