@@ -13,11 +13,14 @@ jobs:
         run: mvn clean install
       - name: Build Docker Image
         run: |
-          docker build -t elvinhndrwn16/demo-vps:v1.0.0 .
+          docker build \
+            --build-arg APP_NAME=$(cat src/main/resources/application.properties | grep spring.application.name= | cut -d'=' -f2) \
+            --build-arg APP_VERSION=$(mvn --non-interactive org.apache.maven.plugins:maven-help-plugin:3.0.1:evaluate -Dexpression=project.version | cut -d'"' -f2) \
+            -t "${APP_NAME}:${APP_VERSION}" .
       - name: Login to Docker Registry
         run: docker login -u elvinhndrwn16 -p ${{ secrets.DOCKER_PASSWORD }}
       - name: Push Docker Image
-        run: docker push elvinhndrwn16/demo-vps:v1.0.0
+        run: docker push "${APP_NAME}:${APP_VERSION}"
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
@@ -25,7 +28,8 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker pull elvinhndrwn16/demo-vps:v1.0.0
-            docker stop demo-vps || true # Ignore errors if container is not running
-            docker rm demo-vps || true
-            docker run -d --name demo-vps -p 8080:8080 elvinhndrwn16/demo-vps:v1.0.0
+            docker stop $(docker ps -a -q)
+            docker rm $(docker ps -a -q)
+            docker image prune -f
+            docker pull "${APP_NAME}:${APP_VERSION}"
+            docker run -d --name my_app "${APP_NAME}:${APP_VERSION}"
