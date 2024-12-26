@@ -42,8 +42,8 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker stop $(docker ps -a -q)
-            docker rm $(docker ps -a -q)
+            docker stop $(docker ps -a -q) || true
+            docker rm $(docker ps -a -q) || true
             docker image prune -f
             docker pull elvinhndrwn16/${{ env.APP_NAME }}:${{ env.APP_VERSION }}
             docker run -d --name ${APP_NAME} -p 8080:8080 elvinhndrwn16/${{ env.APP_NAME }}:${{ env.APP_VERSION }}
