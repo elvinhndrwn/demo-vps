@@ -1,0 +1,29 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker Image
+        run: |
+          docker build -t elvinhndrwn16/demo-vps:v1.0.0 .
+      - name: Login to Docker Registry
+        run: docker login -u elvinhndrwn16 -p ${{ secrets.DOCKER_PASSWORD }}
+      - name: Push Docker Image
+        run: docker push elvinhndrwn16/demo-vps:v1.0.0
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: 202.10.41.5
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull elvinhndrwn16/demo-vps:v1.0.0
+            docker stop demo-vps || true # Ignore errors if container is not running
+            docker rm demo-vps || true
+            docker run -d --name demo-vps -p 8080:8080 elvinhndrwn16/demo-vps:v1.0.0
