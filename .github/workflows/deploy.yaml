@@ -11,21 +11,19 @@ jobs:
       - uses: actions/checkout@v3
       - name: Build with Maven
         run: mvn clean install
-      - name: Extract Application Name and Version
-        id: extract-vars
+      - name: Extract Application Version from pom.xml
+        id: extract-version
         run: |
-          APP_NAME=$(grep 'spring.application.name' src/main/resources/application.properties | cut -d'=' -f2)
           APP_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
       - name: Build Docker Image
         run: |
-          docker build -t elvinhndrwn16/${{ env.APP_NAME }}:${{ env.APP_VERSION }} .
+          docker build --build-arg APP_VERSION=${{ env.APP_VERSION }} -t elvinhndrwn16/demo-vps:${{ env.APP_VERSION }} .
       - name: Login to Docker Registry
         run: docker login -u elvinhndrwn16 -p ${{ secrets.DOCKER_PASSWORD }}
       - name: Push Docker Image
         run: |
-          docker push elvinhndrwn16/${{ env.APP_NAME }}:${{ env.APP_VERSION }}
+          docker push elvinhndrwn16/demo-vps:${{ env.APP_VERSION }}
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
@@ -36,5 +34,5 @@ jobs:
             docker stop $(docker ps -a -q) || true
             docker rm $(docker ps -a -q) || true
             docker image prune -f
-            docker pull elvinhndrwn16/${{ env.APP_NAME }}:${{ env.APP_VERSION }}
-            docker run -d --name demo-vps-container -p 8080:8080 elvinhndrwn16/${{ env.APP_NAME }}:${{ env.APP_VERSION }}
+            docker pull elvinhndrwn16/demo-vps:${{ env.APP_VERSION }}
+            docker run -d --name demo-vps -p 8080:8080 elvinhndrwn16/demo-vps:${{ env.APP_VERSION }}
