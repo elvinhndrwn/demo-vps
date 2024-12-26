@@ -1,3 +1,12 @@
+# Menggunakan base image dari OpenJDK 17
 FROM openjdk:17-jdk-alpine
-COPY target/demo-vps-${APP_VERSION}.jar app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+
+# Mendefinisikan ARG untuk nama aplikasi dan versi
+ARG APP_NAME
+ARG APP_VERSION
+
+# Menyalin file .jar yang dibangun berdasarkan nama aplikasi dan versi
+COPY target/${APP_NAME}-${APP_VERSION}.jar app.jar
+
+# Menjalankan aplikasi Spring Boot
+ENTRYPOINT ["java", "-jar", "/app.jar"]
